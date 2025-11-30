@@ -1,0 +1,130 @@
+# CareerOwl MVP: System Architecture & Master Plan
+
+**Version:** 1.2 (Final Merged)
+**Timeline:** 6 Weeks
+**Role:** Solutions Architect
+
+---
+
+## 1. Technology Stack (Strict)
+
+* **Frontend:** Next.js 16 (App Router, Server Actions, `await cookies()` pattern).
+* **Backend / Database:** Supabase (PostgreSQL, Auth, Realtime).
+* **Storage:** Supabase Storage (Buckets).
+* **Styling:** Tailwind CSS + Shadcn UI (Components) + Lucide React.
+* **Payments:** Square Web Payments SDK (Standard $60 / Premium $50).
+* **Language:** TypeScript (Strict mode, types generated from DB).
+
+---
+
+## 2. Core Business Rules & Constraints
+
+1.  **Verification Gate (Trust & Safety):**
+    * Employers can sign up but **cannot post jobs** until `document_verification_status` is `'verified'`.
+    * Admins verify documents manually via the Admin Portal.
+    * Job Seekers can verify identity for a "Verified" badge.
+
+2.  **Payment Model:**
+    * **Pay-per-post** model (Transactional).
+    * Payment must succeed via Webhook *before* job status flips to `'published'`.
+    * Refunds are manual via Admin/Square Dashboard.
+
+3.  **Role Security (RBAC):**
+    * **Table-per-Type Inheritance:** Users exist in `auth.users` -> `public.profiles` -> `sub_tables`.
+    * **Middleware Jail:** Middleware checks `user_metadata.role` to prevent cross-portal access (e.g., Seekers cannot view `/employer/*`).
+
+4.  **Exclusions (MVP Scope):**
+    * NO AI resume scanning or chatbots.
+    * NO automated recurring billing (subscriptions).
+    * NO "Database Search" for employers (Passive hiring).
+
+---
+
+## 3. Database Schema (Entity Relationship)
+
+**Pattern:** Class Table Inheritance (One-to-One).
+**Global Enums:** `user_role`, `verification_status`, `app_status`, `job_status`.
+
+### A. Profiles (Master)
+* **Table:** `public.profiles`
+* **RLS:** Users view own profile; Public views limited fields.
+* **Columns:** `id` (FK auth.users), `email`, `role`, `created_at`, `last_active_at`.
+
+### B. Applicant Profiles (Child)
+* **Table:** `public.applicant_profiles`
+* **Sensitive Data:** `id_document_urls` (Stored in Private Bucket).
+* **Target Groups (Booleans):** `is_newcomer`, `is_veteran`, `is_person_with_disability`, `is_indigenous`, `is_youth`, `is_mature_worker`, `is_visible_minority`.
+* **Columns:** `id`, `legal_names`, `phone`, `location`, `verification_status`, `noc_code`, `years_exp`, `resume_url`.
+
+### C. Employer Profiles (Child)
+* **Table:** `public.employer_profiles`
+* **Columns:** `id`, `business_name`, `cra_number`, `website`, `verification_status`, `business_license_url` (Private Bucket), `logo_url` (Public Bucket).
+
+### D. Job Posts
+* **Table:** `public.job_posts`
+* **Indexes:** `(status, created_at)` [Sorting], `location_province` [Filtering], `noc_code` [Filtering].
+* **Columns:** `id`, `employer_id`, `title`, `description_html`, `salary_range`, `is_esdc_compliant` (bool), `status`, `tracking_number`.
+
+### E. Applications
+* **Table:** `public.applications`
+* **RLS:** Visible only to Applicant and the specific Employer.
+* **Columns:** `id`, `job_id`, `applicant_id`, `status`, `cover_letter`, `resume_snapshot_url`.
+
+### F. Transactions (Financial Audit)
+* **Table:** `public.transactions`
+* **Columns:** `id`, `employer_id`, `job_id`, `amount_cents`, `currency` (CAD), `square_payment_id`, `status` (success/failed), `created_at`.
+
+### G. Messaging
+* **Tables:** `conversations` (Relations), `messages` (Content).
+* **Constraint:** Employer must initiate conversation.
+
+### H. Admin Logs
+* **Table:** `public.admin_logs`
+* **Columns:** `id`, `admin_id` (FK), `action` (e.g., 'verified_employer', 'force_closed_job'), `target_id` (UUID), `details` (JSONB), `ip_address`, `created_at`.
+
+---
+
+## 4. Sitemap & Folder Structure
+
+### Public (`app/(public)`)
+* `/`: Landing + Search Hero.
+* `/jobs`: Main Job Board (Server-side filtering).
+* `/jobs/[id]`: Job Details.
+* `/api/webhooks/square`: Payment listener.
+
+### Authentication (`app/(auth)`)
+* `/login`, `/register`, `/auth/callback`.
+
+### Portals (`app/(portal)`)
+* **Seeker:**
+    * `/seeker/dashboard`: Metrics & Alerts.
+    * `/seeker/profile`: 9-Tab Form.
+    * `/seeker/applications`: Status tracking.
+    * `/seeker/messages`: Inbox.
+* **Employer:**
+    * `/employer/dashboard`: Metrics.
+    * `/employer/jobs/new`: Payment Flow.
+    * `/employer/jobs/[id]/kanban`: Applicant Management.
+    * `/employer/messages`: Inbox.
+
+### Admin (`app/(admin)`)
+* `/admin/verification`: Queue for pending docs.
+* `/admin/users`: User management.
+* `/admin/jobs`: Global job list (Force Close).
+
+---
+
+## 5. Security & Data Protection strategy
+
+1.  **Row Level Security (RLS):**
+    * Enabled on ALL tables.
+    * `job_posts`: Public can SELECT `published` only.
+    * `transactions`: Employer can SELECT own; Admin can SELECT all.
+
+2.  **Storage Policies:**
+    * **Bucket: `documents` (Private):** Used for IDs and Business Licenses. Only accessible via Signed URLs generated by Server Actions.
+    * **Bucket: `public-assets` (Public):** Logos and Avatars.
+
+3.  **Bot Protection:**
+    * Middleware matcher filters non-asset routes.
+    * Rate limiting on `/api/webhooks` and `/auth` routes (via Upstash or Supabase limits).

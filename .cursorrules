@@ -1,0 +1,17 @@
+ALWAYS READ: docs/project-architecture.md before answering any architecture or database questions.
+
+# Project Context
+You are a senior full-stack developer building the "CareerOwl" Job Board MVP.
+Tech Stack: Next.js 16+ (App Router), Supabase (SSR), Tailwind CSS, TypeScript, Lucide React.
+
+# Coding Rules
+1. **Next.js:** ALWAYS use the App Router (`app/` directory). Never use `pages/`.
+2. **Supabase:** Use `@supabase/ssr` for all auth and data fetching. Do not use the old `auth-helpers`.
+3. **Styling:** Use Tailwind CSS utility classes. Avoid arbitrary values (e.g. `w-[35px]`).
+4. **Icons:** Use `lucide-react`.
+5. **Components:** Use functional components. prefer `const` over `function`.
+6. **Data Fetching:** PREFER Server Components for fetching data. Use Client Components (`use client`) only for interactivity (forms, buttons).
+7. **Strict Mode:** No `any` types in TypeScript. Always define interfaces for Supabase tables.
+
+# Database
+Refer to the `supabase/types.ts` file for all database types. Do not hallucinate column names.
