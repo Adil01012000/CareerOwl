@@ -1,0 +1,43 @@
+/app
+ ├── layout.tsx                  (Root Layout - Fonts, Providers)
+ ├── (public)                    (Marketing & Search - No Sidebar)
+ │    ├── page.tsx               (Landing Page + Search Hero)
+ │    ├── jobs
+ │    │    ├── page.tsx          (Job Board with Filters)
+ │    │    └── [id]/page.tsx     (Job Detail + "Apply Now" Modal)
+ │    └── pricing/page.tsx       (Static pricing view)
+ │
+ ├── (auth)                      (Authentication)
+ │    ├── login/page.tsx
+ │    ├── register/page.tsx      (Role selection: Employer vs Seeker)
+ │    └── verify/page.tsx        (Email confirmation page)
+ │
+ ├── (portal)                    (Authenticated User Layout)
+ │    ├── layout.tsx             (Checks Role -> Renders Correct Navbar)
+ │    │
+ │    ├── seeker                 (Seeker Role Only)
+ │    │    ├── dashboard/page.tsx
+ │    │    ├── profile/page.tsx  (Tabbed Form: Identity, Pro, Work Auth)
+ │    │    ├── documents/page.tsx
+ │    │    └── applications/page.tsx
+ │    │
+ │    └── employer               (Employer Role Only)
+ │         ├── dashboard/page.tsx
+ │         ├── company/page.tsx  (Profile + Verification Uploads)
+ │         ├── jobs
+ │         │    ├── new/page.tsx (Post Job Form + Square Payment)
+ │         │    └── [id]
+ │         │         ├── edit/page.tsx
+ │         │         └── kanban/page.tsx (Drag & drop applicants)
+ │         └── messages/page.tsx (Chat System)
+ │
+ ├── (admin)                     (Admin Role Only - Special Layout)
+ │    ├── dashboard/page.tsx
+ │    ├── verification
+ │    │    ├── employers/page.tsx
+ │    │    └── applicants/page.tsx
+ │    └── users/page.tsx
+ │
+ └── api
+      └── webhooks
+           └── square/route.ts   (Listen for Payment Success)

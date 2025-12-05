@@ -77,7 +77,7 @@ export const signup = async (formData: FormData): Promise<AuthResult> => {
     options: {
       emailRedirectTo: `${origin}/auth/callback`,
       data: {
-        role, // This will be available in user_metadata for the database trigger
+        role, user_metadata: { role } // This will be available in user_metadata for the database trigger
       },
     },
   })

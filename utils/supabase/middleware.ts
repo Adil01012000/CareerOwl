@@ -55,8 +55,25 @@ export const updateSession = async (request: NextRequest) => {
 
   // If user is logged in
   if (user) {
-    const role = user.user_metadata?.role as 'job_seeker' | 'employer' | 'admin' | undefined
+    let role = user.user_metadata?.role as 'job_seeker' | 'employer' | 'admin' | undefined
 
+  // If metadata is missing, query the database (fallback)
+  if (!role) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    
+    role = profile?.role
+
+    // If STILL no role, user needs to complete registration
+    if (!role) {
+      console.warn('User has no role:', user.email, user.id)
+      // For now, assume job_seeker as default
+      role = 'job_seeker'
+    }
+  }
     // Redirect authenticated users away from auth pages to their dashboard
     if (isAuthRoute) {
       const url = request.nextUrl.clone()

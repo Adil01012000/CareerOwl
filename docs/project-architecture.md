@@ -128,3 +128,7 @@
 3.  **Bot Protection:**
     * Middleware matcher filters non-asset routes.
     * Rate limiting on `/api/webhooks` and `/auth` routes (via Upstash or Supabase limits).
+
+
+Design and colours:
+-#78355E-#A8E600-#2563EB-dark grey (Bold text - headings)
