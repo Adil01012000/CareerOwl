@@ -3,13 +3,24 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { Database } from '@/types/supabase'
 
 export const updateSession = async (request: NextRequest) => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error(
+      'Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file.'
+    )
+    // Return response without auth check if env vars are missing
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
 
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -39,8 +50,8 @@ export const updateSession = async (request: NextRequest) => {
   const { pathname } = request.nextUrl
 
   // Define protected route prefixes
-  const protectedRoutes = ['/seeker', '/employer', '/admin']
-  const authRoutes = ['/login', '/register']
+  const protectedRoutes = ['/seeker', '/employer', '/recruiter', '/advertiser', '/esdc', '/admin']
+  const authRoutes = ['/login', '/register', '/role-selection']
 
   // Check if current path is protected
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
@@ -55,7 +66,7 @@ export const updateSession = async (request: NextRequest) => {
 
   // If user is logged in
   if (user) {
-    let role = user.user_metadata?.role as 'job_seeker' | 'employer' | 'admin' | undefined
+    let role = user.user_metadata?.role as 'job_seeker' | 'employer' | 'recruiter' | 'advertiser' | 'esdc_officer' | 'admin' | undefined
 
   // If metadata is missing, query the database (fallback)
   if (!role) {
@@ -81,6 +92,15 @@ export const updateSession = async (request: NextRequest) => {
         case 'employer':
           url.pathname = '/employer/dashboard'
           break
+        case 'recruiter':
+          url.pathname = '/recruiter/dashboard'
+          break
+        case 'advertiser':
+          url.pathname = '/advertiser/dashboard'
+          break
+        case 'esdc_officer':
+          url.pathname = '/esdc/dashboard'
+          break
         case 'admin':
           url.pathname = '/admin/dashboard'
           break
@@ -94,8 +114,8 @@ export const updateSession = async (request: NextRequest) => {
 
     // Role-based route enforcement (do NOT query database - use metadata)
     if (role === 'job_seeker') {
-      // Job seekers cannot access employer or admin routes
-      if (pathname.startsWith('/employer') || pathname.startsWith('/admin')) {
+      // Job seekers cannot access other role routes
+      if (pathname.startsWith('/employer') || pathname.startsWith('/recruiter') || pathname.startsWith('/advertiser') || pathname.startsWith('/esdc') || pathname.startsWith('/admin')) {
         const url = request.nextUrl.clone()
         url.pathname = '/seeker/dashboard'
         return NextResponse.redirect(url)
@@ -103,10 +123,37 @@ export const updateSession = async (request: NextRequest) => {
     }
 
     if (role === 'employer') {
-      // Employers cannot access seeker or admin routes
-      if (pathname.startsWith('/seeker') || pathname.startsWith('/admin')) {
+      // Employers cannot access other role routes
+      if (pathname.startsWith('/seeker') || pathname.startsWith('/recruiter') || pathname.startsWith('/advertiser') || pathname.startsWith('/esdc') || pathname.startsWith('/admin')) {
         const url = request.nextUrl.clone()
         url.pathname = '/employer/dashboard'
+        return NextResponse.redirect(url)
+      }
+    }
+
+    if (role === 'recruiter') {
+      // Recruiters cannot access other role routes
+      if (pathname.startsWith('/seeker') || pathname.startsWith('/employer') || pathname.startsWith('/advertiser') || pathname.startsWith('/esdc') || pathname.startsWith('/admin')) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/recruiter/dashboard'
+        return NextResponse.redirect(url)
+      }
+    }
+
+    if (role === 'advertiser') {
+      // Advertisers cannot access other role routes
+      if (pathname.startsWith('/seeker') || pathname.startsWith('/employer') || pathname.startsWith('/recruiter') || pathname.startsWith('/esdc') || pathname.startsWith('/admin')) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/advertiser/dashboard'
+        return NextResponse.redirect(url)
+      }
+    }
+
+    if (role === 'esdc_officer') {
+      // ESDC Officers cannot access other role routes
+      if (pathname.startsWith('/seeker') || pathname.startsWith('/employer') || pathname.startsWith('/recruiter') || pathname.startsWith('/advertiser') || pathname.startsWith('/admin')) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/esdc/dashboard'
         return NextResponse.redirect(url)
       }
     }

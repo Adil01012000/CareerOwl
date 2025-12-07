@@ -18,7 +18,7 @@ export default async function PortalLayout({
   }
 
   // Get role from metadata (fast) or profiles table (fallback)
-  let role = user.user_metadata?.role as 'job_seeker' | 'employer' | 'admin' | undefined
+  let role = user.user_metadata?.role as 'job_seeker' | 'employer' | 'recruiter' | 'advertiser' | 'esdc_officer' | 'admin' | undefined
   let email = user.email || ''
 
   // Fallback: Query profiles if metadata is missing
@@ -38,7 +38,10 @@ export default async function PortalLayout({
   }
 
   const roleName = role === 'job_seeker' ? 'Job Seeker' : 
-                   role === 'employer' ? 'Employer' : 'Admin'
+                   role === 'employer' ? 'Employer' :
+                   role === 'recruiter' ? 'Recruiter' :
+                   role === 'advertiser' ? 'Advertiser' :
+                   role === 'esdc_officer' ? 'ESDC Officer' : 'Admin'
 
   return (
     <div className="flex h-screen flex-col">

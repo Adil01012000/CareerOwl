@@ -9,12 +9,13 @@ import {
   MessageSquare,
   FileText,
   Users,
-  ShieldCheck
+  ShieldCheck,
+  Building2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
-  role: 'job_seeker' | 'employer' | 'admin'
+  role: 'job_seeker' | 'employer' | 'recruiter' | 'advertiser' | 'esdc_officer' | 'admin'
 }
 
 export function PortalSidebar({ role }: SidebarProps) {
@@ -29,9 +30,19 @@ export function PortalSidebar({ role }: SidebarProps) {
 
   const employerLinks = [
     { href: '/employer/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/employer/company', label: 'Company Profile', icon: Building2 },
     { href: '/employer/jobs', label: 'My Jobs', icon: Briefcase },
     { href: '/employer/jobs/new', label: 'Post New Job', icon: FileText },
     { href: '/employer/messages', label: 'Messages', icon: MessageSquare },
+  ]
+
+  const recruiterLinks = [
+    { href: '/recruiter/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/recruiter/profile', label: 'My Profile', icon: User },
+    { href: '/recruiter/clients', label: 'Clients', icon: Building2 },
+    { href: '/recruiter/jobs', label: 'Jobs', icon: Briefcase },
+    { href: '/recruiter/candidates', label: 'Candidates', icon: Users },
+    { href: '/recruiter/messages', label: 'Messages', icon: MessageSquare },
   ]
 
   const adminLinks = [
@@ -44,6 +55,7 @@ export function PortalSidebar({ role }: SidebarProps) {
   const links = 
     role === 'job_seeker' ? seekerLinks :
     role === 'employer' ? employerLinks :
+    role === 'recruiter' ? recruiterLinks :
     adminLinks
 
   return (

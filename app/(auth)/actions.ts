@@ -39,6 +39,12 @@ export const login = async (formData: FormData): Promise<AuthResult> => {
   // 3. Dynamic Redirect based on Role
   if (role === 'employer') {
     redirect('/employer/dashboard')
+  } else if (role === 'recruiter') {
+    redirect('/recruiter/dashboard')
+  } else if (role === 'advertiser') {
+    redirect('/advertiser/dashboard')
+  } else if (role === 'esdc_officer') {
+    redirect('/esdc/dashboard')
   } else if (role === 'admin') {
     redirect('/admin/dashboard')
   } else {
@@ -53,13 +59,14 @@ export const signup = async (formData: FormData): Promise<AuthResult> => {
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const role = formData.get('role') as 'job_seeker' | 'employer'
+  const role = formData.get('role') as 'job_seeker' | 'employer' | 'recruiter' | 'advertiser' | 'esdc_officer'
 
   if (!email || !password) {
     return { error: 'Email and password are required' }
   }
 
-  if (!role || !['job_seeker', 'employer'].includes(role)) {
+  const validRoles = ['job_seeker', 'employer', 'recruiter', 'advertiser', 'esdc_officer']
+  if (!role || !validRoles.includes(role)) {
     return { error: 'Please select a valid role' }
   }
 

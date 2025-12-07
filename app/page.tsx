@@ -62,7 +62,7 @@ export default function HomePage() {
                 Browse All Jobs
               </Button>
             </Link>
-            <Link href="/register">
+            <Link href="/role-selection">
               <Button className="bg-primary" size="lg">
                 Create Account
               </Button>
